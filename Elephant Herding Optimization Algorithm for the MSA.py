@@ -1,6 +1,7 @@
-#EHO2 Algorithm for Multiple Sequence Alignment (MSA)
-#Bio-inspired by Elephant Herding Optimization
-
+"""
+EHO2 Algorithm for Multiple Sequence Alignment (MSA)
+Bio-inspired by Elephant Herding Optimization
+"""
 
 import random
 import numpy as np
@@ -8,11 +9,7 @@ import blosum
 import time
 import os
 
-
-
 GAP_PENALTY = -2
-
-
 class Elephant:
     def __init__(self, alignment):
         self.alignment = alignment  # List of aligned sequences
@@ -105,15 +102,11 @@ def group_into_clans(population, num_clans):
         clans[idx % num_clans].append(elephant)
     return clans
 
-
-
-
-
 def get_aligned_cut_index(seq, aa_cut_index):
-    
-    #Dada una secuencia alineada (con gaps) y un índice de corte de aminoácido,
-    #devuelve el índice en la secuencia alineada donde ocurre ese corte.
-    
+    """
+    Dada una secuencia alineada (con gaps) y un índice de corte de aminoácido,
+    devuelve el índice en la secuencia alineada donde ocurre ese corte.
+    """
     aa_count = 0
     for i, c in enumerate(seq):
         if c != '-':
@@ -122,13 +115,11 @@ def get_aligned_cut_index(seq, aa_cut_index):
             return i + 1  # Corte después de este aminoácido
     return len(seq)  # Si el corte es al final
 
-
-
 def clan_updating_operator(clan, crossProbabilty):
-    
-    #Operador de actualización del clan con crossover biológico.
-    #Al final, iguala la longitud de todas las secuencias rellenando con gaps al final.
-    
+    """
+    Operador de actualización del clan con crossover biológico.
+    Al final, iguala la longitud de todas las secuencias rellenando con gaps al final.
+    """
     if len(clan) <= 1:
         return
     matriarch = max(clan, key=lambda e: e.fitness)
@@ -159,19 +150,12 @@ def clan_updating_operator(clan, crossProbabilty):
                 elephant.alignment = new_alignment
                 elephant.fitness = calculate_fitness(new_alignment)
 
-
-
-
 def separation_operator(clan, sequences):   #Phase 2
-   
     if len(clan) <= 1:
         return
 
     matriarch = max(clan, key=lambda e: e.fitness)
     bestFitness = matriarch.fitness
-
-
-
     # Crear nuevo alineamiento aleatorio a partir de las secuencias originales
     alignment = [list(seq) for seq in sequences]  # Convertir a listas para modificar
     newElephantFitness = 0
@@ -210,22 +194,10 @@ def separation_operator(clan, sequences):   #Phase 2
         else: #convierte las secuencias de new elephant a listas
             alignment = [list(seq) for seq in alignment]
 
-
-
-
-
-
-
     # Eliminar el peor elefante del clan
     worst = min(clan, key=lambda e: e.fitness)
     clan.remove(worst)
     clan.append(new_elephant)
-
-
-
-
-#fasta_file = 'C:\secuenciasBFOA\multifasta.FASTA'  # Replace with your FASTA file
-#fasta_file = 'IDE_protein_sequences.fasta'
 
 def eho2_msa(fasta_file = 'yourFastaFile.fasta' ,scheme = "B", pop_size=36, num_clans=6, max_iter=88, crossProbabilty= 0.8):
     global time
@@ -253,20 +225,10 @@ def eho2_msa(fasta_file = 'yourFastaFile.fasta' ,scheme = "B", pop_size=36, num_
     # print(best_elephant)
     return best_elephant.alignment, progress
 
-
-
-
 def remove_gaps(seq):
-    
-    # Elimina todos los gaps (-) de una secuencia alineada.
-    
     return seq.replace('-', '')
 
 def validate(original_sequences, final_alignment):
-
-    # print("=== VALIDACIoN DE INTEGRIDAD BIOLoGICA ===")
-    # print(f"Comparando {len(original_sequences)} secuencias originales vs alineadas...")
-    # print()
 
     all_valid = True
     validation_results = []
@@ -289,58 +251,23 @@ def validate(original_sequences, final_alignment):
             'gaps_count': aligned.count('-')
         })
 
-        # if is_valid:
-            # print(f"✓ Secuencia {i+1}: VaLIDA")
-            # print(f"  Original:     {original}")
-            # print(f"  Alineada:     {aligned}")
-            # print(f"  Sin gaps:     {aligned_no_gaps}")
-            # print(f"  Gaps anadidos: {aligned.count('-')}")
-        # else:
-        #     print(f"✗ Secuencia {i+1}: INVaLIDA - ¡INFORMACIoN PERDIDA!")
-        #     print(f"  Original:     {original}")
-        #     print(f"  Alineada:     {aligned}")
-        #     print(f"  Sin gaps:     {aligned_no_gaps}")
-        #     print(f"  Diferencia:   {set(original) - set(aligned_no_gaps)}")
-        #     all_valid = False
-        # print()
-
-    # Resumen final
-    # print("=== RESUMEN DE VALIDACIoN ===")
     if all_valid:
         print()
-        # print("✓ VALIDACIoN EXITOSA: Toda la informacion biologica se conservo.")
-        # print("✓ El alineamiento es biológicamente integro.")
     else:
         print("✗ ---------------------------            VALIDACIÓN FALLIDA: Se detecto perdida de informacion biologica.")
-        # print("✗ El alineamiento NO es biologicamente integro.")
-
-    # print(f"Total de secuencias validadas: {len(original_sequences)}")
-    # print(f"Secuencias validas: {sum(1 for r in validation_results if r['is_valid'])}")
-    # print(f"Secuencias invalidas: {sum(1 for r in validation_results if not r['is_valid'])}")
-
     return all_valid, validation_results
 
-
+# Función auxiliar para usar en el algoritmo principal
+def validate_final_solution(original_sequences, best_elephant):
     return validate(original_sequences, best_elephant.alignment)[0]
-
-
 
 if __name__ == '__main__':
     matrixBlsm = blosum.BLOSUM(62)
     NFE = 0  # Número de evaluaciones de la función objetivo
     #inicia la cuenta del tiempo
     start_time = time.time()
-
-
-
-
-
-
     best_elephant, progress = eho2_msa()
 
-    # Ejemplo de validación al final del algoritmo (ajusta según tu flujo):
-    # original_sequences = read_fasta('C:\secuenciasBFOA\multifasta.FASTA')
-    # best_elephant = max(population, key=lambda e: e.fitness)  # Ajusta si tu variable es diferente
     is_valid, results = validate(original_sequences, best_elephant)
     if is_valid:
         print("El alineamiento final es biologicamente valido.")
